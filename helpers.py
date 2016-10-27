@@ -122,7 +122,9 @@ def ridge_regression(y, tx, lambda_):
     
     # Initializing useful parameters
     k=len(y)
-    l=tx.shape[1]
+    l=1
+    if(len(tx.shape) > 1):
+        l = tx.shape[1]
     #LA=lambda_*np.eye(l,l)
     LA=lambda_*2*k*np.eye(l,l)
     LA[0,0]=0
@@ -288,5 +290,54 @@ def undefToMeanMean(m):
     a[a == -999] = float('nan')
     means = np.nanmean(a,0)
     return np.where((np.isnan(a)),means,a)
+
+
+def build_k_indices(y, k_fold, seed):
+    """build k indices for k-fold."""
+    num_row = y.shape[0]
+    interval = int(num_row / k_fold)
+    np.random.seed(seed)
+    indices = np.random.permutation(num_row)
+    k_indices = [indices[k * interval: (k + 1) * interval]
+                 for k in range(k_fold)]
+    return np.array(k_indices)
+
+def build_poly(x, degree):
+    """Nothing implemented yet just return x, which is right if deg == 1"""
+    if(degree != 1):
+        raise NotImplementedError
+    
+    #ret=np.zeros((len(x),degree+1))
+    
+    #for i in np.arange(degree+1):
+     #   ret[:,i]=x**(i)  
+    return x
+    # ***************************************************
+    
+    """cross validation as implemented in labs 4"""
+def cross_validation(y, x, k_indices, k, lambda_, degree):
+    """return the loss of ridge regression."""
+    train_err=[]
+    test_err=[]
+    for i in k_indices:
+        
+        x_train, y_train = np.delete(x,i,0), np.delete(y,i,0)
+        x_test, y_test = x[i], y[i]
+        
+
+        phi_test = build_poly(x_test, degree)
+        phi_train = build_poly(x_train, degree)
+
+        w_opt, mse_tr = ridge_regression(y_train, phi_train, lambda_)
+    
+        
+        mse_te = compute_loss_mse(y_test, phi_test, w_opt)
+        rmse_tr, rmse_te= (2*mse_tr)**(0.5), (2*mse_te)**(0.5)
+        train_err.append(rmse_tr)
+        test_err.append(rmse_te)
+    loss_tr = np.mean(train_err)
+    loss_te = np.mean(test_err)
+    
+    return loss_tr, loss_te
 
     

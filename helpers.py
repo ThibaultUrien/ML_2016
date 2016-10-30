@@ -320,7 +320,7 @@ def cross_validation(y, x, k_indices, k, lambda_, degree):
     train_err=[]
     test_err=[]
     for i in k_indices:
-        
+        # as x and y can have more than 1 dimetion, add  0 as direction perameter to delete lines.
         x_train, y_train = np.delete(x,i,0), np.delete(y,i,0)
         x_test, y_test = x[i], y[i]
         
@@ -335,9 +335,9 @@ def cross_validation(y, x, k_indices, k, lambda_, degree):
         rmse_tr, rmse_te= (2*mse_tr)**(0.5), (2*mse_te)**(0.5)
         train_err.append(rmse_tr)
         test_err.append(rmse_te)
+        
     loss_tr = np.mean(train_err)
     loss_te = np.mean(test_err)
-    
     return loss_tr, loss_te
 
     

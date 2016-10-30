@@ -159,40 +159,46 @@ def calculate_logistic_gradient(y, tx, w):
     err= sigmoid(np.dot(tx,w))-y
     return np.dot(tx.T,err)
 
-def calculate_logistic_hessian(y, tx, w):
+def calculate_logistic_hessian(tx, w):
     """return the hessian of the loss function."""
 
     sig=sigmoid(np.dot(tx,w))*(1-sigmoid(np.dot(tx,w)))
 
-    S=np.diag(sig[:,0])
+    H = np.dot(tx.T, sig*tx)
 
-    return np.dot(np.dot(tx.T,S),tx)
+    return H
 
 # LOGISTIC REG AVEC UN GRADIENT
 # UNE ITERATION
 
 def logistic_regression(y, tx, initial_w, alpha, max_iters, threshold, method):
     
-    #if method==True:
-        
+    # if method == True, we implement Gradient descent
+    # if method == False, we implement Newton method   
+    
     """
-    Do gradient descent using logistic regression.
+    Do gradient descent / Newton method using logistic regression.
     Return the loss and the updated w.
     """
+    
     w=initial_w
     losses=[]
     
     for iter in range(max_iters):
         
         # get loss and and gradient
-        loss, grad = logistic_regression_aid(y, tx, w)
+        loss, grad, hess = logistic_regression_aid(y, tx, w)
         
         # We print loss each 100 iteration
         if iter % 100 == 0:
             print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
             
         # update w    
-        w=w-alpha*grad  
+        if method == True:
+            w=w-alpha*grad  
+            
+        else:
+            w=w-alpha*np.linalg.solve(hess,grad)
         
         # store loss
         losses.append(loss)
@@ -242,9 +248,9 @@ def reg_logistic_regression(y, tx, initial_w, lambda_, alpha, max_iters, thresho
 
 
 def logistic_regression_aid(y, tx, w):
-    """return the loss, gradient (and hessian)."""
+    """return the loss, gradient and hessian !"""
 
-    return calculate_logistic_loss(y, tx, w), calculate_logistic_gradient(y, tx, w)
+    return calculate_logistic_loss(y, tx, w), calculate_logistic_gradient(y, tx, w), calculate_logistic_hessian(tx, w)
 
 
 def reg_logistic_regression_aid(y, tx, w, lambda_):

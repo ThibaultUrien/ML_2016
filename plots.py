@@ -14,18 +14,6 @@ def cross_validation_visualization(lambds, mse_tr, mse_te):
     plt.grid(True)
     plt.savefig("cross_validation")
     plt.show()
-    
-def cross_validation_delta_visualization(lambds, mse_tr, mse_te):
-    """visualization the curves of mse_tr and mse_te."""
-    delta = tuple(map(lambda x, y: x - y, mse_te, mse_tr))
-    plt.semilogx(lambds, delta, marker=".", color='b', label='test error - train error')
-    plt.xlabel("lambda")
-    plt.ylabel("rmse")
-    plt.title("cross validation")
-    plt.legend(loc=2)
-    plt.grid(True)
-    plt.savefig("cross_validation_delta")
-    plt.show()
 
 
 def bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te):

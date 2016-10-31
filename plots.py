@@ -3,6 +3,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
         
+def undefinded_remplacement_visualization(gammas, t1,name1, t2,name2):
+    """visualization the curves of mse_tr and mse_te."""
+    plt.semilogx(gammas, t1, marker=".", color='b', label=name1)
+    plt.semilogx(gammas, t2, marker=".", color='r', label=name2)
+    plt.xlabel("gamma")
+    plt.ylabel("loss")
+    plt.title("Compare "+name1+" and "+name2)
+    plt.legend(loc=2)
+    plt.grid(True)
+    plt.show()
+
 def cross_validation_visualization(lambds, mse_tr, mse_te):
     """visualization the curves of mse_tr and mse_te."""
     plt.semilogx(lambds, mse_tr, marker=".", color='b', label='train error')
@@ -12,9 +23,7 @@ def cross_validation_visualization(lambds, mse_tr, mse_te):
     plt.title("cross validation")
     plt.legend(loc=2)
     plt.grid(True)
-    plt.savefig("cross_validation")
     plt.show()
-
 
 def bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te):
     """visualize the bias variance decomposition."""

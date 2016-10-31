@@ -71,11 +71,11 @@ def least_square_GD(y, tx, initial_w,gamma, max_iters):
 
         
         # print loss every 100 iterations
-        if n_iter % 100 == 0:
+        if n_iter % 10000 == 0:
             print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_iters - 1, l=loss))
             
         
-    print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_iters - 1, l=loss))
+    #print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_iters - 1, l=loss))
 
     return w
 
@@ -93,8 +93,8 @@ def least_square_SGD(y, tx, batch_size, initial_w, max_epochs, gamma):
             w = w-gamma*grad
             loss=compute_loss_mse(y,tx,w)
           
-        if n_iter % 10 == 0:
-            print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_epochs - 1, l=loss))
+           
+       # print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_epochs - 1, l=loss))
       
     return w
 
@@ -144,7 +144,6 @@ def calculate_logistic_loss(y, tx, w):
     """compute the cost by negative log likelihood."""
     
     #loss = y*np.log(sigmoid(np.dot(tx,w))) + (1-y)*np.log(1-sigmoid(np.dot(tx, w)))
-    #return np.sum(loss)
     logistic_loss = np.log (1+np.exp(np.dot(tx,w)))-y*np.dot(tx,w)
     return np.sum(logistic_loss)
 
@@ -163,7 +162,7 @@ def calculate_logistic_hessian(tx, w):
 
     return H
 
-def logistic_regression(y, tx, initial_w, alpha, max_iters, method):
+def logistic_regression(y, tx, initial_w, alpha, max_iters, threshold, method):
     
     # if method == True, we implement Gradient descent
     # if method == False, we implement Newton method   
@@ -181,18 +180,26 @@ def logistic_regression(y, tx, initial_w, alpha, max_iters, method):
         # get loss and and gradient
         loss, grad, hess = logistic_regression_aid(y, tx, w)
         
-        # We print loss each 200 iteration
-        if iter % 200 == 0:
+        # We print loss each 100 iteration
+        if iter % 100 == 0:
             print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
             
-        # update w 
-        
+        # update w    
         if method == True:
             w=w-alpha*grad  
             
         else:
             w=w-alpha*np.linalg.solve(hess,grad)
+        
+        # store loss
+        losses.append(loss)
+        
+        #Convergence criteria
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
     
+    # visualization Pas encore non ...
+    #visualization(y, x, mean_x, std_x, w, "classification_by_logistic_regression_gradient_descent")
     print("The loss={l}".format(l=loss))
 
     return loss, w
@@ -304,12 +311,12 @@ def build_k_indices(y, k_fold, seed):
 
 def build_poly(x, degree):
     """Nothing implemented yet just return x, which is right if deg == 1"""
+    
     if(degree != 1):
         new_x = np.repeat(x,degree, axis=1)
         polyndex = np.arange(x.shape[1]) * degree;
-        for i in range(1, degree):
-            print(polyndex + i)
-            new_x[:,polyndex + i] **= (i+1)
+        for i in range(1 , degree):
+            new_x[polyndex + i,:] **= (i+1);
         return new_x
     return x
     # ***************************************************

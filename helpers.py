@@ -93,8 +93,8 @@ def least_square_SGD(y, tx, batch_size, initial_w, max_epochs, gamma):
             w = w-gamma*grad
             loss=compute_loss_mse(y,tx,w)
           
-           
-        print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_epochs - 1, l=loss))
+        if n_iter % 10 == 0:
+            print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_epochs - 1, l=loss))
       
     return w
 
@@ -144,6 +144,7 @@ def calculate_logistic_loss(y, tx, w):
     """compute the cost by negative log likelihood."""
     
     #loss = y*np.log(sigmoid(np.dot(tx,w))) + (1-y)*np.log(1-sigmoid(np.dot(tx, w)))
+    #return np.sum(loss)
     logistic_loss = np.log (1+np.exp(np.dot(tx,w)))-y*np.dot(tx,w)
     return np.sum(logistic_loss)
 
@@ -162,7 +163,7 @@ def calculate_logistic_hessian(tx, w):
 
     return H
 
-def logistic_regression(y, tx, initial_w, alpha, max_iters, threshold, method):
+def logistic_regression(y, tx, initial_w, alpha, max_iters, method):
     
     # if method == True, we implement Gradient descent
     # if method == False, we implement Newton method   
@@ -180,26 +181,18 @@ def logistic_regression(y, tx, initial_w, alpha, max_iters, threshold, method):
         # get loss and and gradient
         loss, grad, hess = logistic_regression_aid(y, tx, w)
         
-        # We print loss each 100 iteration
-        if iter % 100 == 0:
+        # We print loss each 200 iteration
+        if iter % 200 == 0:
             print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
             
-        # update w    
+        # update w 
+        
         if method == True:
             w=w-alpha*grad  
             
         else:
             w=w-alpha*np.linalg.solve(hess,grad)
-        
-        # store loss
-        losses.append(loss)
-        
-        #Convergence criteria
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
     
-    # visualization Pas encore non ...
-    #visualization(y, x, mean_x, std_x, w, "classification_by_logistic_regression_gradient_descent")
     print("The loss={l}".format(l=loss))
 
     return loss, w

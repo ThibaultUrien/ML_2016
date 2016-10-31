@@ -145,7 +145,11 @@ def calculate_logistic_loss(y, tx, w):
     
     #loss = y*np.log(sigmoid(np.dot(tx,w))) + (1-y)*np.log(1-sigmoid(np.dot(tx, w)))
     #return np.sum(loss)
-    logistic_loss = np.log (1+np.exp(np.dot(tx,w)))-y*np.dot(tx,w)
+    if (len(y.shape)==1):
+        z=y.reshape(y.shape[0],1)
+    else:
+        z=y
+    logistic_loss = np.log(1+np.exp(np.dot(tx,w)))-z*np.dot(tx,w)
     return np.sum(logistic_loss)
 
 def calculate_logistic_gradient(y, tx, w):
@@ -197,7 +201,7 @@ def logistic_regression(y, tx, initial_w, alpha, max_iters, method):
 
     return loss, w
 
-def reg_logistic_regression(y, tx, initial_w, lambda_, alpha, max_iters, threshold):
+def reg_logistic_regression(y, tx, initial_w, lambda_, alpha, max_iters):
     """
     Do gradient descent using reguralized logistic regression.
     Return the loss and the updated w.
@@ -211,18 +215,11 @@ def reg_logistic_regression(y, tx, initial_w, lambda_, alpha, max_iters, thresho
         loss, grad = reg_logistic_regression_aid(y, tx, w, lambda_)
         
         # We print loss each 100 iteration
-        if iter % 200 == 0:
+        if iter % 300 == 0:
             print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
             
         # update w    
         w=w-alpha*grad  
-        
-        # store loss
-        losses.append(loss)
-        
-        #Convergence criteria
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
     
     # visualization Pas encore non ...
     #visualization(y, x, mean_x, std_x, w, "classification_by_logistic_regression_gradient_descent")
@@ -288,7 +285,7 @@ def method(i, tX):
     if i==2:
         return standardize(undefToMeanMean(tX), mean_x=None, std_x=None)
     if i==3:
-        return standardize(build_poly(tX, 2), mean_x=None, std_x=None)
+        return standardize(build_poly(undefToMeanMean(tX), 3), mean_x=None, std_x=None)
         
 
 
@@ -308,14 +305,14 @@ def build_poly(x, degree):
         new_x = np.repeat(x,degree, axis=1)
         polyndex = np.arange(x.shape[1]) * degree;
         for i in range(1, degree):
-            print(polyndex + i)
+            #print(polyndex + i)
             new_x[:,polyndex + i] **= (i+1)
         return new_x
     return x
     # ***************************************************
     
     """cross validation as implemented in labs 4"""
-def cross_validation(y, x, initial_w, alpha, max_iter, threshold, k_indices, k, lambda_, degree):
+def cross_validation(y, x, initial_w, alpha, max_iter, k_indices, k, lambda_, degree):
     """ return the loss for test and train sets """
     train_err=[]
     test_err=[]
@@ -325,22 +322,19 @@ def cross_validation(y, x, initial_w, alpha, max_iter, threshold, k_indices, k, 
         # as x and y can have more than 1 dimetion, add  0 as direction perameter to delete lines.
         x_train, y_train = np.delete(x,i,0), np.delete(y,i,0)
         x_test, y_test = x[i], y[i]
-        #print('x_train.shape = ', x_train.shape,'y_train.shape = ', y_train.shape)
-        #print('x_test.shape = ', x_test.shape,'y_test.shape = ', y_test.shape)
         phi_test = build_poly(x_test, degree)
         phi_train = build_poly(x_train, degree)
         
         #w_opt, mse_tr = ridge_regression(y_train, phi_train, lambda_)
-        mse_tr, w_opt = reg_logistic_regression(y_train, phi_train, initial_w, lambda_, alpha, max_iter, threshold)
-        #print(mse_tr.shape, w_opt.shape)
         
+        mse_tr, w_opt = reg_logistic_regression(y_train, phi_train, initial_w, lambda_, alpha, max_iter)
         # Pour ridge regression
         #mse_te = compute_loss_mse(y_test, phi_test, w_opt)
         
         # Pour logistique penalized regression
         mse_te = calculate_logistic_loss(y_test, phi_test, w_opt) + lambda_*(np.linalg.norm(w_opt)**2)
         
-        rmse_tr, rmse_te= (2*mse_tr)**(0.5), (2*mse_te)**(0.5)
+        #rmse_tr, rmse_te= (2*mse_tr)**(0.5), (2*mse_te)**(0.5)
         #print('mse_tr = ', mse_tr)
         #print('mse_te = ', mse_te)
         

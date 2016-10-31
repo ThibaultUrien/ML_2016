@@ -311,21 +311,13 @@ def build_k_indices(y, k_fold, seed):
 
 def build_poly(x, degree):
     """Nothing implemented yet just return x, which is right if deg == 1"""
-    
     if(degree != 1):
-        new_x = undefToMeanMean(x)
-        ret=np.zeros((new_x.shape[0],new_x.shape[1]*degree))
-        
-        for i in np.arange(new_x.shape[1]):
-            for deg in np.arange(degree):
-                ret[:,2*(i)] = new_x[:,i]
-                ret[:,2*(i)+1] = new_x[:,i]**(deg+1)
-        return ret
-
-    #ret=np.zeros((len(x),degree+1))
-    
-    #for i in np.arange(degree+1):
-     #   ret[:,i]=x**(i)  
+        new_x = np.repeat(x,degree, axis=1)
+        polyndex = np.arange(x.shape[1]) * degree;
+        for i in range(1, degree):
+            print(polyndex + i)
+            new_x[:,polyndex + i] **= (i+1)
+        return new_x
     return x
     # ***************************************************
     

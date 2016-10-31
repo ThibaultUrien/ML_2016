@@ -58,9 +58,8 @@ def compute_gradient(y, tx, w):
 
 def least_square_GD(y, tx, initial_w,gamma, max_iters): 
     """Gradient descent algorithm."""
-    # Define parameters to store w and loss
-    ws = [initial_w]
-    losses = []
+    
+    # Define initial w
     w = initial_w
     
     for n_iter in range(max_iters):
@@ -69,40 +68,35 @@ def least_square_GD(y, tx, initial_w,gamma, max_iters):
         loss=compute_loss_mse(y,tx, w)
         # update w by gradient
         w=w-gamma*G
+
         
-        # store w and loss
-        ws.append(np.copy(w))
-        losses.append(loss)
+        # print loss every 100 iterations
+        if n_iter % 100 == 0:
+            print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_iters - 1, l=loss))
+            
+        
     print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_iters - 1, l=loss))
 
-    return losses, ws, losses[-1], ws[-1]
+    return w
 
-def least_square_SGD(y, tx, batch_size, initial_w, max_epochs, nouv_it, gamma):
+def least_square_SGD(y, tx, batch_size, initial_w, max_epochs, gamma):
     """Stochastic gradient descent algorithm."""
-    # Define parameters to store w and loss
     
-    ws = [initial_w]
-    losses = []
+    # Define initial w 
     w = initial_w;
     
     for n_iter in range(max_epochs):
-        i=0
-        print(i)
+
         for minibatch_y, minibatch_tx in batch_iter(y, tx, batch_size):
-            # compute gradient and loss, store them
-            if i==nouv_it:
-                break
-            i=i+1
-            grad= compute_gradient(minibatch_y, minibatch_tx, w)
-            w=w-gamma*grad
-            ws.append(np.copy(w))
+            
+            grad = compute_gradient(minibatch_y, minibatch_tx, w)
+            w = w-gamma*grad
             loss=compute_loss_mse(y,tx,w)
-            losses.append(loss)
+          
            
-        print("Gradient Descent({bi}/{ti}): loss={l}".format(
-                  bi=n_iter, ti=max_epochs - 1, l=loss))
+        print("Gradient Descent({bi}/{ti}): loss={l}".format(bi=n_iter, ti=max_epochs - 1, l=loss))
       
-    return losses, ws, losses[-1], ws[-1]
+    return w
 
 def least_squares(y, tx):
     """calculate the least squares solution."""
@@ -167,9 +161,6 @@ def calculate_logistic_hessian(tx, w):
     H = np.dot(tx.T, sig*tx)
 
     return H
-
-# LOGISTIC REG AVEC UN GRADIENT
-# UNE ITERATION
 
 def logistic_regression(y, tx, initial_w, alpha, max_iters, threshold, method):
     
@@ -298,6 +289,16 @@ def undefToMeanMean(m):
     return np.where((np.isnan(a)),means,a)
 
 
+def method(i, tX):
+    if i==1:
+        return standardize(remove_outlier_columns(tX), mean_x=None, std_x=None)
+    if i==2:
+        return standardize(undefToMeanMean(tX), mean_x=None, std_x=None)
+    if i==3:
+        return standardize(build_poly(tX, 2), mean_x=None, std_x=None)
+        
+
+
 def build_k_indices(y, k_fold, seed):
     """build k indices for k-fold."""
     num_row = y.shape[0]
@@ -310,9 +311,17 @@ def build_k_indices(y, k_fold, seed):
 
 def build_poly(x, degree):
     """Nothing implemented yet just return x, which is right if deg == 1"""
-    if(degree != 1):
-        raise NotImplementedError
     
+    if(degree != 1):
+        new_x = undefToMeanMean(x)
+        ret=np.zeros((new_x.shape[0],new_x.shape[1]*degree))
+        
+        for i in np.arange(new_x.shape[1]):
+            for deg in np.arange(degree):
+                ret[:,2*(i)] = new_x[:,i]
+                ret[:,2*(i)+1] = new_x[:,i]**(deg+1)
+        return ret
+
     #ret=np.zeros((len(x),degree+1))
     
     #for i in np.arange(degree+1):
@@ -321,29 +330,48 @@ def build_poly(x, degree):
     # ***************************************************
     
     """cross validation as implemented in labs 4"""
-def cross_validation(y, x, k_indices, k, lambda_, degree):
-    """return the loss of ridge regression."""
+def cross_validation(y, x, initial_w, alpha, max_iter, threshold, k_indices, k, lambda_, degree):
+    """ return the loss for test and train sets """
     train_err=[]
     test_err=[]
+    
     for i in k_indices:
-        
+        #print(i)
+        # as x and y can have more than 1 dimetion, add  0 as direction perameter to delete lines.
         x_train, y_train = np.delete(x,i,0), np.delete(y,i,0)
         x_test, y_test = x[i], y[i]
-        
-
+        #print('x_train.shape = ', x_train.shape,'y_train.shape = ', y_train.shape)
+        #print('x_test.shape = ', x_test.shape,'y_test.shape = ', y_test.shape)
         phi_test = build_poly(x_test, degree)
         phi_train = build_poly(x_train, degree)
-
-        w_opt, mse_tr = ridge_regression(y_train, phi_train, lambda_)
-    
         
-        mse_te = compute_loss_mse(y_test, phi_test, w_opt)
+        #w_opt, mse_tr = ridge_regression(y_train, phi_train, lambda_)
+        mse_tr, w_opt = reg_logistic_regression(y_train, phi_train, initial_w, lambda_, alpha, max_iter, threshold)
+        #print(mse_tr.shape, w_opt.shape)
+        
+        # Pour ridge regression
+        #mse_te = compute_loss_mse(y_test, phi_test, w_opt)
+        
+        # Pour logistique penalized regression
+        mse_te = calculate_logistic_loss(y_test, phi_test, w_opt) + lambda_*(np.linalg.norm(w_opt)**2)
+        
         rmse_tr, rmse_te= (2*mse_tr)**(0.5), (2*mse_te)**(0.5)
-        train_err.append(rmse_tr)
-        test_err.append(rmse_te)
+        #print('mse_tr = ', mse_tr)
+        #print('mse_te = ', mse_te)
+        
+
+        # On utilise la mse
+        train_err.append(mse_tr)
+        test_err.append(mse_te)
+        
+        # On utilise la rmse
+        #train_err.append(rmse_tr)
+        #test_err.append(rmse_te)
+        
     loss_tr = np.mean(train_err)
+    #print('moyenne : rmse_tr', loss_tr)
     loss_te = np.mean(test_err)
-    
-    return loss_tr, loss_te
+    #print('moyenne : rmse_te', loss_te)
+    return loss_tr, loss_te, test_err
 
     
